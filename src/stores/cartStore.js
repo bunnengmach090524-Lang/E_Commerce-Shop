@@ -4,9 +4,10 @@ import { ref, computed } from 'vue'
 export const useCartStore = defineStore('cart', () => {
   const items = ref([])
   const isDrawerOpen = ref(false)
+  const lastAdded = ref(null)
 
-  const totalItems = computed(() => items.value.reduce((sum, i) => sum + i.qty, 0))
-  const subtotal = computed(() => items.value.reduce((sum, i) => sum + i.price * i.qty, 0))
+  const totalItems = computed(() => items.value.reduce((s, i) => s + i.qty, 0))
+  const subtotal   = computed(() => items.value.reduce((s, i) => s + i.price * i.qty, 0))
 
   function addToCart(product) {
     const existing = items.value.find(i => i.id === product.id)
@@ -15,6 +16,7 @@ export const useCartStore = defineStore('cart', () => {
     } else {
       items.value.push({ ...product, qty: 1 })
     }
+    lastAdded.value = { ...product, _ts: Date.now() }
     isDrawerOpen.value = true
   }
 
@@ -28,12 +30,9 @@ export const useCartStore = defineStore('cart', () => {
     if (item) item.qty = qty
   }
 
-  function clearCart() {
-    items.value = []
-  }
-
-  function openDrawer() { isDrawerOpen.value = true }
+  function clearCart() { items.value = [] }
+  function openDrawer()  { isDrawerOpen.value = true }
   function closeDrawer() { isDrawerOpen.value = false }
 
-  return { items, isDrawerOpen, totalItems, subtotal, addToCart, removeItem, updateQty, clearCart, openDrawer, closeDrawer }
+  return { items, isDrawerOpen, lastAdded, totalItems, subtotal, addToCart, removeItem, updateQty, clearCart, openDrawer, closeDrawer }
 })
