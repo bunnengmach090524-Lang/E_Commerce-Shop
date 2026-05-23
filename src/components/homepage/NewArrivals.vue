@@ -1,51 +1,77 @@
 <template>
-    <!-- New Arrivals -->
-    <section class="max-w-6xl mx-auto px-6 mt-10">
+  <section class="px-4 lg:px-6 py-4">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h2 class="text-white font-black text-xl" style="font-family:'Sora',sans-serif">New Arrivals</h2>
+        <p class="text-white/40 text-sm">Fresh products just landed</p>
+      </div>
+      <div class="flex gap-2">
+        <button @click="scrollLeft" class="w-8 h-8 bg-slate-800 border border-white/10 text-white rounded-xl flex items-center justify-center hover:bg-slate-700 hover:border-amber-400/30 transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button @click="scrollRight" class="w-8 h-8 bg-slate-800 border border-white/10 text-white rounded-xl flex items-center justify-center hover:bg-slate-700 hover:border-amber-400/30 transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+    </div>
 
-        <div v-if="isLoading" class="mt-12 flex gap-6 overflow-hidden">
-            <div v-for="i in 4" :key="i" class="animate-pulse rounded-sm h-72 flex-1" style="background:#141828; min-width:200px;"></div>
+    <div v-if="loading" class="flex gap-4 overflow-hidden">
+      <div v-for="i in 6" :key="i" class="flex-shrink-0 w-44 h-60 bg-slate-800/60 rounded-2xl animate-pulse"></div>
+    </div>
+
+    <div ref="scrollContainer" class="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-1" v-else>
+      <div
+        v-for="product in products"
+        :key="product.id"
+        @click="$router.push(`/product/${product.id}`)"
+        class="flex-shrink-0 w-44 bg-slate-800/60 border border-white/5 rounded-2xl overflow-hidden cursor-pointer hover:border-amber-400/30 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+      >
+        <div class="bg-slate-700/50 h-44 flex items-center justify-center overflow-hidden">
+          <img
+            v-if="product.thumbnail"
+            :src="product.thumbnail"
+            :alt="product.title"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+          />
+          <span v-else class="text-5xl">📦</span>
         </div>
-
-        <div v-else class="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div v-for="(product, index) in newProduct" :key="product.id"
-                class="relative overflow-hidden rounded-sm group cursor-pointer bg-[#141828]"
-                :class="index == 0? 'col-span-2 row-span-2 h-[400px]' : 'h-[190px]'">
-                
-                <img :src="product.images?.[0]" :alt="product.title"
-                    class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    style="filter:saturate(0.8) brightness(0.7)"/>
-
-                <div class="absolute inset-0 flex flex-col justify-end p-5" style="background: linear-gradient(to top, rgba(10,14,26,0.9) 0%, transparent 60%);">
-                    <span class="text-xs tracking-widest uppercase mb-1">New</span>
-                    <h3 class="font-light truncate text-[#f0ece2]" :class="index == 0 ? 'text-lg':'text-sm'">{{ product.title }}</h3>
-                    <p class="text-sm mt-1 text-[#c9a84c]">${{ product.price }}</p>
-                </div>
-            </div>
+        <div class="p-3">
+          <div class="inline-block bg-emerald-500/20 text-emerald-400 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-1.5">New</div>
+          <p class="text-white/80 text-xs font-medium line-clamp-2 leading-snug mb-2">{{ product.title }}</p>
+          <span class="text-amber-400 font-bold text-sm">${{ product.price }}</span>
         </div>
-    </section>
+      </div>
+    </div>
+  </section>
 </template>
 
 <script setup>
-    import { onMounted, ref } from 'vue';
-    import { product_Data } from '../../api/ProductApi';
+import { ref, onMounted } from 'vue'
 
-    const newProduct = ref([]);
-    const isLoading = ref(true);
+const products = ref([])
+const loading = ref(true)
+const scrollContainer = ref(null)
 
-onMounted(async () => {
-    try {
-        const response = await product_Data();
+async function fetchProducts() {
+  try {
+    const res = await fetch('https://dummyjson.com/products?limit=12&skip=10')
+    const data = await res.json()
+    products.value = data.products
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
+}
 
-        // newest product
-        const lastProduct = [...response].reverse();
+function scrollLeft() { scrollContainer.value?.scrollBy({ left: -500, behavior: 'smooth' }) }
+function scrollRight() { scrollContainer.value?.scrollBy({ left: 500, behavior: 'smooth' }) }
 
-        newProduct.value = lastProduct.slice(0, 5);
-
-    } catch (error) {
-        console.log("New Arrivals api error:", error);
-
-    } finally {
-        isLoading.value = false;
-    }
-});
+onMounted(fetchProducts)
 </script>
+
+<style scoped>
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+</style>

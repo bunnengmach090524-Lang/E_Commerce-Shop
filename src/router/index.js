@@ -1,32 +1,19 @@
-// === pages import
-import Shop from '../pages/Shop.vue'
-import Home from '../pages/Home.vue'
-import ProductDetail from '../pages/ProductDetail.vue'
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router'
+import Home from '@/pages/Home.vue'
+import Shop from '@/pages/Shop.vue'
+import ProductDetail from '@/pages/ProductDetail.vue'
 
-// === routs path like
 const routes = [
-    {
-        path: "/",
-        name: "Home",
-        component: Home 
-    },
-    {
-        path: "/shop",
-        name: "Shop",
-        component: Shop
-    },
-    {
-        path: "/product/:id",
-        name: "ProductDetail",
-        component: ProductDetail
-    }
-];
+  { path: '/', name: 'Home', component: Home },
+  { path: '/shop', name: 'Shop', component: Shop },
+  { path: '/product/:id', name: 'ProductDetail', component: ProductDetail },
+  { path: '/:pathMatch(.*)*', redirect: '/' }
+]
 
-// === create rounter
 const router = createRouter({
-    history: createWebHistory(),
-    routes
-});
+  history: createWebHistory(),
+  routes,
+  scrollBehavior() { return { top: 0 } }
+})
 
-export default router;
+export default router

@@ -1,40 +1,45 @@
 <template>
-  <div class="flex items-center ml-3 space-x-4 text-gray-300">
-    <button @click="$emit('toggle-search')" class="hover:text-white transition-colors p-1" aria-label="Search">
-      <svg width="19" height="19" viewBox="0 0 18 18" fill="none">
-        <circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5" />
-        <path d="M12.5 12.5L16 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-      </svg>
+  <div class="flex items-center gap-1">
+    <!-- Account -->
+    <button class="hidden md:flex flex-col items-start px-3 py-1.5 rounded-xl hover:bg-white/10 transition-all duration-200 group">
+      <span class="text-white/50 text-[10px] leading-none">Hello, Sign in</span>
+      <span class="text-white text-xs font-semibold leading-tight group-hover:text-amber-400 transition-colors">Account & Lists</span>
     </button>
 
-    <a href="/wishlist" class="hover:text-white transition-colors p-1" aria-label="Wishlist">
-      <svg width="19" height="19" viewBox="0 0 18 18" fill="none">
-        <path d="M9 15S2 10.5 2 6a4 4 0 017-2.65A4 4 0 0116 6c0 4.5-7 9-7 9z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
-      </svg>
-    </a>
+    <!-- Orders -->
+    <button class="hidden md:flex flex-col items-start px-3 py-1.5 rounded-xl hover:bg-white/10 transition-all duration-200 group">
+      <span class="text-white/50 text-[10px] leading-none">Returns</span>
+      <span class="text-white text-xs font-semibold leading-tight group-hover:text-amber-400 transition-colors">& Orders</span>
+    </button>
 
-    <a href="/cart" class="hover:text-white transition-colors p-1" aria-label="Cart">
-      <svg width="19" height="19" viewBox="0 0 18 18" fill="none">
-        <path d="M1 1h2.5l1.8 9h8.4l1.8-5H4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-        <circle cx="7.5" cy="14.5" r="1" fill="currentColor" />
-        <circle cx="13.5" cy="14.5" r="1" fill="currentColor" />
+    <!-- Wishlist -->
+    <button class="relative p-2.5 rounded-xl hover:bg-white/10 transition-all duration-200 group">
+      <svg class="w-5 h-5 text-white group-hover:text-red-400 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
       </svg>
-    </a>
+      <span v-if="wishlistCount" class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{{ wishlistCount }}</span>
+    </button>
 
-    <div class="hidden lg:flex items-center space-x-3 pl-2">
-      <button class="hover:text-white transition-colors" aria-label="Account">
-        <svg width="19" height="19" viewBox="0 0 18 18" fill="none">
-          <circle cx="9" cy="6" r="3.5" stroke="currentColor" stroke-width="1.5" />
-          <path d="M2 16c0-3.314 3.134-6 7-6s7 2.686 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+    <!-- Cart -->
+    <button @click="$router.push('/cart')" class="relative flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/10 transition-all duration-200 group">
+      <div class="relative">
+        <svg class="w-6 h-6 text-white group-hover:text-amber-400 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
         </svg>
-      </button>
-      <BaseButton>sign in</BaseButton>
-      <!-- <a href="/login" class="uppercase text-xs font-semibold text-white bg-blue-600 py-1.5 px-4 hover:bg-blue-700 transition duration-300">Sign In</a> -->
-    </div>
+        <span class="absolute -top-2 -right-2 w-5 h-5 bg-amber-400 text-slate-900 text-[10px] font-black rounded-full flex items-center justify-center">{{ cartCount }}</span>
+      </div>
+      <div class="hidden lg:flex flex-col items-start leading-none">
+        <span class="text-white/50 text-[10px]">Cart</span>
+        <span class="text-amber-400 text-xs font-bold">${{ cartTotal }}</span>
+      </div>
+    </button>
   </div>
 </template>
 
 <script setup>
-import BaseButton from '../ui/BaseButton.vue';
-defineEmits(['toggle-search']);
+import { ref } from 'vue'
+
+const cartCount = ref(3)
+const cartTotal = ref('124.99')
+const wishlistCount = ref(5)
 </script>

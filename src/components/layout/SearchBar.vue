@@ -1,65 +1,99 @@
 <template>
-  <transition name="search-slide">
-    <div v-if="isOpen" class="navbar__search-wrapper absolute left-0 right-0 top-14 z-40">
-      <div class="navbar__search-bar bg-black border-t border-gray-800 flex items-center shadow-lg w-full h-14">
-        <div class="w-full max-w-6xl mx-auto flex items-center justify-between px-6">
-          <div class="flex items-center space-x-4 w-full">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" class="text-gray-400 flex-shrink-0">
-              <circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5" />
-              <path d="M12.5 12.5L16 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-            </svg>
-            <input 
-              ref="searchInput"
-              class="border-0 outline-none bg-transparent text-base text-white placeholder-gray-400 font-light w-full" 
-              type="text" 
-              placeholder="Search products, categories..." 
-              maxlength="100"
-            >
-          </div>
-          <button @click="$emit('close')" class="text-gray-400 hover:text-white transition-colors text-sm pl-4 flex-shrink-0">✕</button>
-        </div>
+  <div class="flex-1 max-w-2xl relative group">
+    <div class="flex items-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl overflow-hidden focus-within:border-amber-400/60 focus-within:bg-white/15 focus-within:shadow-lg focus-within:shadow-amber-400/10 transition-all duration-300">
+      <!-- Category dropdown -->
+      <select
+        v-model="selectedCategory"
+        class="hidden md:block bg-transparent text-white/70 text-xs font-medium px-3 py-3 outline-none cursor-pointer border-r border-white/20 hover:text-amber-400 transition-colors"
+      >
+        <option value="">All</option>
+        <option value="electronics">Electronics</option>
+        <option value="fashion">Fashion</option>
+        <option value="home">Home</option>
+        <option value="beauty">Beauty</option>
+        <option value="sports">Sports</option>
+        <option value="books">Books</option>
+      </select>
+
+      <!-- Input -->
+      <input
+        v-model="query"
+        @keyup.enter="handleSearch"
+        @input="handleInput"
+        type="text"
+        placeholder="Search for products, brands and more..."
+        class="flex-1 bg-transparent text-white placeholder-white/40 text-sm px-4 py-3 outline-none min-w-0"
+      />
+
+      <!-- Search button -->
+      <button
+        @click="handleSearch"
+        class="px-4 py-3 bg-amber-400 hover:bg-amber-300 text-slate-900 transition-all duration-200 hover:shadow-md flex items-center gap-1.5 font-semibold text-sm flex-shrink-0"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <span class="hidden lg:block">Search</span>
+      </button>
+    </div>
+
+    <!-- Search suggestions dropdown -->
+    <div
+      v-if="showSuggestions && suggestions.length"
+      class="absolute top-full left-0 right-0 mt-2 bg-slate-800/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden"
+    >
+      <div class="p-2">
+        <p class="text-white/40 text-xs px-3 py-1.5 font-medium uppercase tracking-wider">Suggestions</p>
+        <button
+          v-for="s in suggestions"
+          :key="s"
+          @click="selectSuggestion(s)"
+          class="w-full text-left px-3 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white rounded-xl transition-colors flex items-center gap-2"
+        >
+          <svg class="w-3.5 h-3.5 text-white/30" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          {{ s }}
+        </button>
       </div>
     </div>
-  </transition>
+  </div>
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue';
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 
-const props = defineProps({
-  isOpen: Boolean
-});
+const router = useRouter()
+const query = ref('')
+const selectedCategory = ref('')
+const showSuggestions = ref(false)
 
-defineEmits(['close']);
+const allSuggestions = [
+  'iPhone 15', 'Samsung Galaxy', 'Nike shoes', 'Laptop under $500',
+  'Wireless headphones', 'Coffee maker', 'Running shoes', 'Smart watch',
+  'Gaming chair', 'Bluetooth speaker', 'Yoga mat', 'Air fryer'
+]
 
-const searchInput = ref(null);
+const suggestions = computed(() => {
+  if (!query.value || query.value.length < 2) return []
+  return allSuggestions.filter(s => s.toLowerCase().includes(query.value.toLowerCase())).slice(0, 6)
+})
 
-// ដំណើរការការ Focus ទៅលើ Input នៅពេលដែលប្រអប់ស្វែងរកត្រូវបានបើក (isOpen = true)
-watch(() => props.isOpen, async (newVal) => {
-  if (newVal) {
-    await nextTick();
-    searchInput.value?.focus();
+function handleInput() {
+  showSuggestions.value = query.value.length >= 2
+}
+
+function handleSearch() {
+  if (query.value.trim()) {
+    showSuggestions.value = false
+    router.push({ path: '/shop', query: { q: query.value, category: selectedCategory.value } })
   }
-});
+}
+
+function selectSuggestion(s) {
+  query.value = s
+  showSuggestions.value = false
+  handleSearch()
+}
 </script>
-
-<style scoped>
-.navbar__search-wrapper {
-  top: 100%;
-  margin-top: 0px;
-}
-
-/* search style animation */
-.search-slide-enter-active,
-.search-slide-leave-active {
-  transition: opacity 0.2s ease, max-height 0.25s ease;
-  max-height: 56px;
-  overflow: hidden;
-}
-
-.search-slide-enter-from,
-.search-slide-leave-to {
-  opacity: 0;
-  max-height: 0;
-}
-</style>

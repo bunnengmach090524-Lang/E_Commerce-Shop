@@ -1,33 +1,36 @@
 <template>
-  <div class="flex flex-wrap items-center justify-center gap-3 rounded-3xl bg-white p-4 shadow-sm border border-stone-100">
+  <div class="flex items-center justify-center gap-2 py-6">
+    <!-- Prev -->
     <button
-      type="button"
-      class="rounded-full bg-stone-100 px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-200 disabled:cursor-not-allowed disabled:opacity-50"
+      @click="$emit('change', currentPage - 1)"
       :disabled="currentPage === 1"
-      @click="$emit('pageChange', currentPage - 1)"
+      class="w-9 h-9 flex items-center justify-center rounded-xl border text-sm font-medium transition-all"
+      :class="currentPage === 1 ? 'border-white/5 text-white/20 cursor-not-allowed' : 'border-white/10 text-white hover:border-amber-400/40 hover:bg-amber-400/10 hover:text-amber-400'"
     >
-      Prev
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
 
-    <button
-      v-for="page in pagesToShow"
-      :key="page"
-      type="button"
-      class="rounded-full px-4 py-2 text-sm font-semibold transition"
-      :class="page === currentPage ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'"
-      @click="page !== '...' && $emit('pageChange', page)"
-      :disabled="page === '...'"
-    >
-      {{ page }}
-    </button>
+    <!-- Pages -->
+    <template v-for="page in pages" :key="page">
+      <button
+        v-if="page !== '...'"
+        @click="$emit('change', page)"
+        class="w-9 h-9 flex items-center justify-center rounded-xl border text-sm font-semibold transition-all"
+        :class="page === currentPage ? 'bg-amber-400 border-amber-400 text-slate-900 shadow-lg shadow-amber-400/20' : 'border-white/10 text-white/60 hover:border-amber-400/40 hover:text-white'"
+      >
+        {{ page }}
+      </button>
+      <span v-else class="w-9 h-9 flex items-center justify-center text-white/20">…</span>
+    </template>
 
+    <!-- Next -->
     <button
-      type="button"
-      class="rounded-full bg-stone-100 px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-200 disabled:cursor-not-allowed disabled:opacity-50"
+      @click="$emit('change', currentPage + 1)"
       :disabled="currentPage === totalPages"
-      @click="$emit('pageChange', currentPage + 1)"
+      class="w-9 h-9 flex items-center justify-center rounded-xl border text-sm font-medium transition-all"
+      :class="currentPage === totalPages ? 'border-white/5 text-white/20 cursor-not-allowed' : 'border-white/10 text-white hover:border-amber-400/40 hover:bg-amber-400/10 hover:text-amber-400'"
     >
-      Next
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </button>
   </div>
 </template>
@@ -35,41 +38,20 @@
 <script setup>
 import { computed } from 'vue'
 
-// 💡 កែប្រែទី១៖ ប្តូរមកប្រើ defineProps ឱ្យបានត្រឹមត្រូវដើម្បីទទួលទិន្នន័យពី shop.vue
 const props = defineProps({
-  currentPage: {
-    type: Number,
-    required: true
-  },
-  totalPages: {
-    type: Number,
-    required: true
-  }
+  currentPage: { type: Number, default: 1 },
+  totalPages: { type: Number, default: 1 }
 })
+defineEmits(['change'])
 
-// 💡 កែប្រែទី២៖ ប្រកាស Emit តែមួយដងគត់សម្រាប់ផ្ញើព្រឹត្តិការណ៍ត្រឡប់ទៅវិញ
-const emit = defineEmits(['pageChange'])
-
-// Logic គណនាបង្ហាញលេខទំព័រ (រក្សាទុកល្អដដែល)
-const pagesToShow = computed(() => {
-  const pages = []
-  const lower = Math.max(1, props.currentPage - 2)
-  const upper = Math.min(props.totalPages, props.currentPage + 2)
-  
-  for (let i = lower; i <= upper; i += 1) {
-    pages.push(i)
-  }
-  
-  if (pages[0] !== 1) {
-    pages.unshift(1)
-    if (pages[1] !== 2) pages.splice(1, 0, '...')
-  }
-  
-  if (pages[pages.length - 1] !== props.totalPages) {
-    if (pages[pages.length - 1] !== props.totalPages - 1) pages.push('...')
-    pages.push(props.totalPages)
-  }
-  
-  return pages
+const pages = computed(() => {
+  const p = [], cur = props.currentPage, total = props.totalPages
+  if (total <= 7) { for (let i = 1; i <= total; i++) p.push(i); return p }
+  p.push(1)
+  if (cur > 3) p.push('...')
+  for (let i = Math.max(2, cur - 1); i <= Math.min(total - 1, cur + 1); i++) p.push(i)
+  if (cur < total - 2) p.push('...')
+  p.push(total)
+  return p
 })
 </script>

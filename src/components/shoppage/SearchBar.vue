@@ -1,29 +1,21 @@
 <template>
-    <section>
-        <div class="max-w-6xl mx-auto px-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-5 gap-5 rounded-3xl bg-stone-100 shadow-sm mb-6 border border-stone-200">
-                <div>
-                    <p class="text-xs text-gray-500">Shop our latest curated collection</p>
-                    <h4 class="text-3xl font-medium">Ecommerce Shop</h4>
-                </div>
-
-                <div class="w-full sm:max-w-md">
-                    <input 
-                        type="text" placeholder="Search product..."
-                        @input="onSearch"
-                        class="w-full px-4 py-3 rounded-3xl border border-slate-200 bg-slate-50 text-sm text-slate-900 transition focus:border-primary focu:bg-white">
-                </div>
-            </div>
-        </div>
-    </section>
+  <div class="relative">
+    <input
+      v-model="query"
+      @keyup.enter="$emit('search', query)"
+      type="text"
+      placeholder="Search products..."
+      class="w-full px-4 py-2.5 pl-10 bg-slate-800/60 border border-white/10 rounded-xl text-white placeholder-white/30 text-sm outline-none focus:border-amber-400/40 transition-all"
+    />
+    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <button v-if="query" @click="query = ''; $emit('search', '')" class="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
 </template>
 
 <script setup>
-
-// ====== search logic category
-const emit = defineEmits(["searchCategories"]);
-
-const onSearch = (even) => {
-    emit("searchCategories", even.target.value);
-};
+import { ref } from 'vue'
+defineEmits(['search'])
+const query = ref('')
 </script>

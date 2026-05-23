@@ -1,155 +1,145 @@
 <template>
-    <section class="max-w-6xl mx-auto px-6 lg:h-[calc(100vh-2rem)] lg:overflow-hidden">
-        
-        <div class="flex flex-col gap-6 lg:flex-row lg:items-stretch mt-5 lg:h-full">
-            
-            <FilterSidebar @changeCategories="handleCategories"
-                            @changePrice="handlePrice" />
-                            
-            <div class="flex-1 w-full lg:h-full lg:overflow-y-auto pb-20 pr-1">
-                <SearchBar @searchCategories="handleSearch" />
-
-                <section class="max-w-6xl mx-auto px-6">
-                    <div class="mt-5 mb-6 flex flex-col gap-4 rounded-3xl bg-stone-100 p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between border border-stone-200">
-                        <div class="space-y-1">
-                            <p class="text-xs text-stone-500 font-medium">Showing</p>
-                            <h2 class="text-xl font-bold text-stone-900">{{ filteredProducts.length }} products</h2>
-                        </div>
-
-                        <div class="flex flex-wrap items-center gap-3 text-sm text-stone-600">
-                            <div class="flex items-center gap-2 rounded-full bg-white px-4 py-2 border border-stone-200 shadow-sm">
-                                <label for="sortSelect" class="font-medium text-stone-500">Sort:</label>
-                                <select id="sortSelect" v-model="sortOrder"
-                                    class="bg-transparent font-semibold text-stone-900 focus:outline-none cursor-pointer pr-2">
-                                    <option value="default">Recommended</option>
-                                    <option value="low">Price: Low to High</option>
-                                    <option value="high">Price: High to Low</option>
-                                </select>
-                            </div>
-
-                            <span class="rounded-full bg-white px-4 py-2 border border-stone-200 shadow-sm capitalize">
-                                Category: <span class="font-bold text-stone-900">{{ selectCategory }}</span>
-                            </span>
-                        </div>
-                    </div>
-                </section>
-
-                <ProductCard :items="paginatedProducts" :isLoading="isLoading" />
-
-                <div class="mt-8 mb-12">
-                    <Pagination 
-                        v-if="totalPages > 1"
-                        :currentPage="currentPage" 
-                        :totalPages="totalPages" 
-                        @pageChange="handlePageChange" 
-                    />
-                </div>
-            </div>
+  <div class="min-h-screen bg-slate-900 max-w-screen-2xl mx-auto px-4 lg:px-6 py-6">
+    <!-- Breadcrumb + title -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <div class="flex items-center gap-2 text-white/30 text-xs mb-1">
+          <router-link to="/" class="hover:text-white transition-colors">Home</router-link>
+          <span>/</span>
+          <span class="text-white/60">{{ pageTitle }}</span>
         </div>
-    </section>
+        <h1 class="text-white font-black text-2xl" style="font-family:'Sora',sans-serif">{{ pageTitle }}</h1>
+        <p class="text-white/40 text-sm mt-0.5">{{ total }} products found</p>
+      </div>
+
+      <!-- Sort -->
+      <select v-model="sortBy" @change="fetchProducts" class="bg-slate-800 border border-white/10 text-white text-sm px-3 py-2 rounded-xl outline-none focus:border-amber-400/40 transition-all cursor-pointer">
+        <option value="default">Featured</option>
+        <option value="price-asc">Price: Low to High</option>
+        <option value="price-desc">Price: High to Low</option>
+        <option value="rating">Best Rating</option>
+        <option value="newest">Newest</option>
+      </select>
+    </div>
+
+    <div class="flex gap-6">
+      <!-- Sidebar -->
+      <aside class="w-56 flex-shrink-0 hidden lg:block">
+        <FilterSidebar @filter="handleFilter" />
+      </aside>
+
+      <!-- Main content -->
+      <div class="flex-1 min-w-0">
+        <!-- Mobile search + filter -->
+        <div class="flex gap-3 mb-4 lg:hidden">
+          <div class="flex-1"><ShopSearchBar @search="handleSearch" /></div>
+        </div>
+        <div class="mb-4 lg:hidden">
+          <FilterSidebar @filter="handleFilter" />
+        </div>
+
+        <!-- Desktop search bar -->
+        <div class="hidden lg:block mb-4">
+          <ShopSearchBar @search="handleSearch" />
+        </div>
+
+        <!-- Loading -->
+        <div v-if="loading" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div v-for="i in 12" :key="i" class="bg-slate-800/60 rounded-2xl h-72 animate-pulse"></div>
+        </div>
+
+        <!-- Grid -->
+        <div v-else>
+          <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+            <ProductCard
+              v-for="product in products"
+              :key="product.id"
+              :product="product"
+              @add-to-cart="addToCart"
+              @toggle-wish="toggleWish"
+            />
+          </div>
+
+          <!-- Empty -->
+          <div v-if="!products.length" class="text-center py-20">
+            <span class="text-6xl block mb-4">🔍</span>
+            <h3 class="text-white font-bold text-lg mb-2">No products found</h3>
+            <p class="text-white/40 text-sm">Try adjusting your search or filters</p>
+          </div>
+
+          <!-- Pagination -->
+          <Pagination :current-page="page" :total-pages="totalPages" @change="changePage" />
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { product_Data } from '../api/ProductApi';
-import ProductCard from '../components/shoppage/ProductCard.vue';
-import FilterSidebar from '../components/shoppage/FilterSidebar.vue';
-import SearchBar from '../components/shoppage/SearchBar.vue';
-import Pagination from '../components/shoppage/Pagination.vue';
-// 💡 កែប្រែ៖ បន្ថែម watch ពី Vue មកជាមួយ
-import { computed, onMounted, ref, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import FilterSidebar from '@/components/shoppage/FilterSidebar.vue'
+import ProductCard from '@/components/shoppage/ProductCard.vue'
+import Pagination from '@/components/shoppage/Pagination.vue'
+import ShopSearchBar from '@/components/shoppage/SearchBar.vue'
 
-const products = ref([]);
-const isLoading = ref(true);
+const route = useRoute()
 
-const selectCategory = ref("all");
-const searchQuery = ref("");
-const sortOrder = ref("default"); 
-const filterPrice = ref(100);
+const products = ref([])
+const loading = ref(true)
+const total = ref(0)
+const page = ref(1)
+const limit = 12
+const sortBy = ref('default')
+const searchQuery = ref('')
+const activeFilters = ref({})
 
-// 💡 បន្ថែម៖ States សម្រាប់ Pagination
-const currentPage = ref(1);
-const itemsPerPage = ref(9); // បង្ហាញ ១២ ផលិតផលក្នុងមួយទំព័រ
+const totalPages = computed(() => Math.ceil(total.value / limit))
+const pageTitle = computed(() => {
+  if (route.query.q) return `Results for "${route.query.q}"`
+  if (route.query.category) return route.query.category.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  return 'All Products'
+})
 
-const handlePrice = (price) => {
-    filterPrice.value = price; 
-};
+async function fetchProducts() {
+  loading.value = true
+  try {
+    const skip = (page.value - 1) * limit
+    const category = route.query.category || activeFilters.value.category
+    let url
 
-onMounted(async () => {
-    try {
-        isLoading.value = true;
-        const response = await product_Data();
-        if (response && Array.isArray(response)) {
-            products.value = response;
-        }
-    }
-    catch (error) {
-        console.error("Error fetching products: ", error);
-    }
-    finally {
-        isLoading.value = false;
-    }
-});
-
-const handleCategories = (category) => {
-    selectCategory.value = category;
-};
-
-const handleSearch = (text) => {
-    searchQuery.value = text;
-};
-
-// 💡 បន្ថែម៖ បើអ្នកប្រើប្រាស់ប្តូរ Category, វាយ Search ឬរំកិលតម្លៃ ត្រូវរុញទៅទំព័រទី ១ វិញភ្លាម
-watch([selectCategory, searchQuery, filterPrice], () => {
-    currentPage.value = 1;
-});
-
-// ការ Filter និង Sort (បានកែសម្រួលត្រង់ matchSearch)
-const filteredProducts = computed(() => {
-    let result = products.value.filter(product => {
-        const productName = product.title || product.name || "";
-        const productCatValue = typeof product.category === 'object' ? product.category?.name : product.category;
-
-        // 1. Filter តាម Category Sidebar
-        const matchCategory = selectCategory.value === "all" ||
-            (productCatValue && String(productCatValue).toLowerCase() === String(selectCategory.value).toLowerCase());
-
-        // 2. Filter តាមការវាយ Search (ឆែកទាំងឈ្មោះ និង Category)
-        const matchSearch = productName.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                            (productCatValue && String(productCatValue).toLowerCase().includes(searchQuery.value.toLowerCase()));
-
-        // 3. Filter តាមតម្លៃ
-        const matchPrice = Number(product.price ?? 0) <= Number(filterPrice.value);
-
-        return matchCategory && matchSearch && matchPrice;
-    });
-
-    if (sortOrder.value === "low") {
-        return result.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
-    } 
-    else if (sortOrder.value === "high") {
-        return result.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+    if (searchQuery.value) {
+      url = `https://dummyjson.com/products/search?q=${encodeURIComponent(searchQuery.value)}&limit=${limit}&skip=${skip}`
+    } else if (category) {
+      url = `https://dummyjson.com/products/category/${category}?limit=${limit}&skip=${skip}`
+    } else {
+      url = `https://dummyjson.com/products?limit=${limit}&skip=${skip}`
     }
 
-    return result;
-});
-// 💡 បន្ថែម៖ គណនាចំនួនទំព័រសរុប (ផ្អែកលើផលិតផលដែលចម្រោះរួច)
-const totalPages = computed(() => {
-    return Math.ceil(filteredProducts.value.length / itemsPerPage.value);
-});
+    const res = await fetch(url)
+    const data = await res.json()
+    let prods = data.products
 
-// 💡 បន្ថែម៖ កាត់យកផលិតផលទៅបង្ហាញតាមទំព័រនីមួយៗ (Slice)
-const paginatedProducts = computed(() => {
-    const start = (currentPage.value - 1) * itemsPerPage.value;
-    const end = start + itemsPerPage.value;
-    return filteredProducts.value.slice(start, end);
-});
+    // Sort
+    if (sortBy.value === 'price-asc') prods.sort((a, b) => a.price - b.price)
+    else if (sortBy.value === 'price-desc') prods.sort((a, b) => b.price - a.price)
+    else if (sortBy.value === 'rating') prods.sort((a, b) => b.rating - a.rating)
 
-// 💡 បន្ថែម៖ Function សម្រាប់ប្តូរទំព័រ និងរំកិលអេក្រង់ទៅលើវិញបែប Smooth
-const handlePageChange = (page) => {
-    currentPage.value = page;
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    });
-};
+    products.value = prods
+    total.value = data.total
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
+}
+
+function handleFilter(filters) { activeFilters.value = filters; page.value = 1; fetchProducts() }
+function handleSearch(q) { searchQuery.value = q; page.value = 1; fetchProducts() }
+function changePage(p) { page.value = p; fetchProducts(); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+function addToCart(product) { console.log('Add to cart:', product.title) }
+function toggleWish(product) { console.log('Toggle wish:', product.title) }
+
+watch(() => route.query, () => { page.value = 1; fetchProducts() })
+onMounted(fetchProducts)
 </script>
