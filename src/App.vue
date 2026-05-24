@@ -1,6 +1,8 @@
 <template>
   <div class="min-h-screen bg-slate-900" style="font-family:'DM Sans',sans-serif">
-    <Navbar />
+    <!-- Show navbar only on non-bare pages -->
+    <Navbar v-if="!isBare" />
+
     <main>
       <RouterView v-slot="{ Component }">
         <Transition name="page" mode="out-in">
@@ -12,7 +14,12 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import Navbar from '@/components/layout/Navbar.vue'
+
+const route = useRoute()
+const isBare = computed(() => !!route.meta.bare)
 </script>
 
 <style>
@@ -28,4 +35,7 @@ import Navbar from '@/components/layout/Navbar.vue'
 ::-webkit-scrollbar-track { background: #0f172a; }
 ::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
+
+.line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 </style>
